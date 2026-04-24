@@ -1,4 +1,4 @@
-<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="tr" class="dark">
 <head>
     <meta charset="UTF-8">
@@ -12,7 +12,7 @@
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Poppins', 'sans-serif'] },
+                    fontFamily: { sans: ['Poppins', 'sans-serif'] }
                 }
             }
         }
@@ -24,10 +24,7 @@
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
-        .search-shadow {
-            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-        }
-        /* Custom Scrollbar */
+        .search-shadow { box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #0a0a0a; }
         ::-webkit-scrollbar-thumb { background: #262626; border-radius: 10px; }
@@ -39,43 +36,52 @@
         <h1 class="text-2xl font-bold tracking-tighter">11<span class="text-blue-500">DB</span></h1>
         <div class="flex items-center gap-4">
             <button id="theme-toggle" class="p-2.5 rounded-xl glass-effect hover:bg-gray-100 dark:hover:bg-white/10 transition-all">
-                <svg id="sun-icon" class="hidden w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z"></path></svg>
-                <svg id="moon-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                <!-- Güneş ikonu (light modda görünür) -->
+                <svg id="sun-icon" class="hidden w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z"/>
+                </svg>
+                <!-- Ay ikonu (dark modda görünür) -->
+                <svg id="moon-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                </svg>
             </button>
             <button onclick="signOut()" class="text-xs font-semibold opacity-50 hover:opacity-100 transition">Çıkış Yap</button>
         </div>
     </nav>
 
     <main class="max-w-6xl mx-auto px-6 pt-16 md:pt-24 text-center">
-        <h2 class="text-4xl md:text-7xl font-bold mb-6 tracking-tight animate-pulse-slow">
-            Cevap anahtarlarına <br> 
+        <h2 class="text-4xl md:text-7xl font-bold mb-6 tracking-tight">
+            Cevap anahtarlarına <br>
             <span class="text-transparent bg-clip-text bg-gradient-to-r from-gray-400 to-gray-600 dark:from-gray-500 dark:to-gray-200">
                 saniyeler içinde ulaş.
             </span>
         </h2>
-        
+
         <div class="relative mt-12 max-w-2xl mx-auto">
-            <input type="text" id="search-input" 
-                placeholder="Deneme adı veya yayın ara..." 
-                class="w-full px-8 py-5 text-lg rounded-3xl border-none bg-gray-100 dark:bg-[#161616] focus:ring-2 focus:ring-blue-500 outline-none transition-all search-shadow">
+            <input type="text" id="search-input"
+                placeholder="Deneme adı veya yayın ara..."
+                class="w-full px-8 py-5 text-lg rounded-3xl border-none bg-gray-100 dark:bg-[#161616] focus:ring-2 focus:ring-blue-500 outline-none transition-all search-shadow text-gray-900 dark:text-gray-100">
             <div class="absolute right-6 top-1/2 -translate-y-1/2 text-gray-400 hidden md:block">
                 <kbd class="px-2 py-1 bg-gray-200 dark:bg-gray-800 rounded-lg text-[10px] font-bold">CTRL + K</kbd>
             </div>
         </div>
 
+        <!-- Yükleniyor göstergesi -->
         <div id="loading" class="mt-20">
             <div class="inline-block w-8 h-8 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
         </div>
 
-        <div id="results" class="mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pb-24">
-            </div>
+        <!-- Sonuçlar -->
+        <div id="results" class="mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pb-24"></div>
     </main>
 
     <script>
         // --- KONFİGÜRASYON ---
+        // HATA DÜZELTMESİ: 'supabase' isim çakışmasını önlemek için önce createClient ayrıştırıldı.
         const SUPABASE_URL = 'https://sadxpttfkzqiqlqccyix.supabase.co';
-        const SUPABASE_KEY = 'EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNhZHhwdHRma3pxaXFscWNjeWl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNDE3NTksImV4cCI6MjA5MjYxNzc1OX0.rEKr4zdM_KCIdkdxakEppOiKDUKo2Jknkp_CYbMCPWE';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNhZHhwdHRma3pxaXFscWNjeWl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNDE3NTksImV4cCI6MjA5MjYxNzc1OX0.rEKr4zdM_KCIdkdxakEppOiKDUKo2Jknkp_CYbMCPWE';
+        const { createClient } = window.supabase;
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let allExams = [];
 
@@ -100,36 +106,42 @@
 
             if (error) {
                 console.error('Veri çekilemedi:', error);
+                document.getElementById('results').innerHTML =
+                    '<p class="col-span-full opacity-40 text-red-400">Veriler yüklenirken hata oluştu.</p>';
                 return;
             }
-            allExams = data;
+
+            allExams = data || [];
             renderResults(allExams);
         }
 
-        // --- RENDER (GÖRÜNÜM) ---
+        // --- RENDER ---
         function renderResults(data) {
             const container = document.getElementById('results');
             container.innerHTML = '';
 
-            if (data.length === 0) {
+            if (!data || data.length === 0) {
                 container.innerHTML = '<p class="col-span-full opacity-40">Aradığın deneme henüz yüklenmemiş...</p>';
                 return;
             }
 
             data.forEach(exam => {
                 const card = document.createElement('div');
-                card.className = `group glass-effect p-8 rounded-[2rem] transition-all duration-500 hover:scale-[1.03] hover:bg-white/5 cursor-pointer flex flex-col h-full text-left`;
+                card.className = 'group glass-effect p-8 rounded-[2rem] transition-all duration-500 hover:scale-[1.03] hover:bg-white/5 flex flex-col h-full text-left';
+
+                // HATA DÜZELTMESİ: Buton sınıflarındaki bg-white/bg-black çakışması düzeltildi.
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-6">
                         <span class="px-4 py-1.5 bg-blue-500/10 text-blue-500 text-[10px] font-bold uppercase tracking-widest rounded-full">
-                            ${exam.type}
+                            ${exam.type || 'Deneme'}
                         </span>
                         <span class="text-[11px] text-gray-500 font-medium">${exam.date || '2024'}</span>
                     </div>
-                    <h3 class="text-xl font-bold mb-3 group-hover:text-blue-400 transition-colors leading-tight">${exam.title}</h3>
-                    <p class="text-sm text-gray-400 mb-8 line-clamp-2">${exam.subject} branşı cevap anahtarı.</p>
+                    <h3 class="text-xl font-bold mb-3 group-hover:text-blue-400 transition-colors leading-tight">${exam.title || 'İsimsiz'}</h3>
+                    <p class="text-sm text-gray-400 mb-8 line-clamp-2">${exam.subject || ''} branşı cevap anahtarı.</p>
                     <div class="mt-auto">
-                        <a href="${exam.answer_url}" target="_blank" class="block w-full text-center py-4 rounded-2xl bg-white dark:bg-white dark:text-black text-white bg-black font-bold text-sm hover:bg-blue-600 dark:hover:bg-blue-500 dark:hover:text-white transition-all shadow-lg">
+                        <a href="${exam.answer_url || '#'}" target="_blank" rel="noopener noreferrer"
+                            class="block w-full text-center py-4 rounded-2xl bg-black text-white dark:bg-white dark:text-black font-bold text-sm hover:bg-blue-600 hover:text-white dark:hover:bg-blue-500 dark:hover:text-white transition-all shadow-lg">
                             Cevapları Gör
                         </a>
                     </div>
@@ -139,16 +151,17 @@
         }
 
         // --- ARAMA ---
+        // HATA DÜZELTMESİ: Null/undefined alan değerlerine karşı güvenli kontrol eklendi.
         document.getElementById('search-input').addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase();
-            const filtered = allExams.filter(item => 
-                item.title.toLowerCase().includes(query) || 
-                item.subject.toLowerCase().includes(query)
+            const filtered = allExams.filter(item =>
+                (item.title || '').toLowerCase().includes(query) ||
+                (item.subject || '').toLowerCase().includes(query)
             );
             renderResults(filtered);
         });
 
-        // --- TEMA VE KISAYOLLAR ---
+        // --- TEMA ---
         const toggleBtn = document.getElementById('theme-toggle');
         const sunIcon = document.getElementById('sun-icon');
         const moonIcon = document.getElementById('moon-icon');
@@ -159,6 +172,7 @@
             moonIcon.classList.toggle('hidden');
         });
 
+        // --- KISAYOL: CTRL+K ---
         window.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.key === 'k') {
                 e.preventDefault();
@@ -166,6 +180,7 @@
             }
         });
 
+        // --- ÇIKIŞ ---
         async function signOut() {
             await supabase.auth.signOut();
             window.location.href = 'login.html';
