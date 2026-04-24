@@ -1,0 +1,111 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giriş Yap | 11DB</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        input::placeholder { color: rgba(156, 163, 175, 0.5); }
+    </style>
+</head>
+<body class="bg-[#0a0a0a] text-white flex items-center justify-center min-h-screen p-6">
+
+    <div class="w-full max-w-md glass-panel p-10 rounded-[2.5rem] shadow-2xl transition-all">
+        <div class="text-center mb-10">
+            <h1 class="text-4xl font-bold tracking-tighter mb-2">11<span class="text-blue-500">DB</span></h1>
+            <p class="text-gray-400 text-sm italic">Cevap anahtarı kütüphanesine giriş yap.</p>
+        </div>
+
+        <form id="login-form" class="space-y-5">
+            <div>
+                <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 ml-1">E-Posta Adresi</label>
+                <input type="email" id="email" required 
+                    class="w-full bg-[#161616] border-none rounded-2xl p-4 mt-1 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                    placeholder="ornek@okul.com">
+            </div>
+
+            <div>
+                <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 ml-1">Şifre</label>
+                <input type="password" id="password" required 
+                    class="w-full bg-[#161616] border-none rounded-2xl p-4 mt-1 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                    placeholder="••••••••">
+            </div>
+
+            <button type="submit" id="login-btn" 
+                class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-2xl shadow-lg transition duration-300 transform active:scale-95 mt-4">
+                Giriş Yap
+            </button>
+        </form>
+
+        <p id="msg" class="mt-6 text-center text-xs font-medium min-h-[1rem]"></p>
+
+        <div class="mt-8 pt-6 border-t border-white/5 text-center">
+            <p class="text-[10px] text-gray-600 uppercase tracking-widest">Sadece yetkili öğrenciler erişebilir</p>
+        </div>
+    </div>
+
+    <script>
+        // --- SUPABASE AYARLARI ---
+        const SUPABASE_URL = 'https://sadxpttfkzqiqlqccyix.supabase.co';
+        const SUPABASE_KEY = 'EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNhZHhwdHRma3pxaXFscWNjeWl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNDE3NTksImV4cCI6MjA5MjYxNzc1OX0.rEKr4zdM_KCIdkdxakEppOiKDUKo2Jknkp_CYbMCPWE';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const loginForm = document.getElementById('login-form');
+        const loginBtn = document.getElementById('login-btn');
+        const msg = document.getElementById('msg');
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Loading durumu
+            loginBtn.disabled = true;
+            loginBtn.innerText = "Doğrulanıyor...";
+            msg.innerText = "";
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            // Supabase ile giriş yapma
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email: email,
+                password: password,
+            });
+
+            if (error) {
+                msg.innerText = "Hata: " + error.message;
+                msg.className = "mt-6 text-center text-xs font-medium text-red-500";
+                loginBtn.disabled = false;
+                loginBtn.innerText = "Tekrar Dene";
+            } else {
+                msg.innerText = "Giriş başarılı! Yönlendiriliyorsunuz...";
+                msg.className = "mt-6 text-center text-xs font-medium text-green-500";
+                
+                // Başarılı giriş sonrası index.html'e yönlendir
+                setTimeout(() => {
+                    const params = new URLSearchParams(window.location.search);
+                    const redirect = params.get('to') || 'index.html';
+                    window.location.href = redirect;
+                }, 1000);
+            }
+        });
+
+        // Eğer kullanıcı zaten giriş yapmışsa direkt ana sayfaya at
+        async function checkExistingSession() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                window.location.href = 'index.html';
+            }
+        }
+        checkExistingSession();
+    </script>
+</body>
+</html>

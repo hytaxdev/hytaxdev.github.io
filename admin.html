@@ -1,0 +1,161 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yönetici Paneli | 11DB</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #0a0a0a; color: white; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        input, select {
+            background: #161616 !important;
+            border: 1px solid rgba(255, 255, 255, 0.05) !important;
+            color: white !important;
+        }
+        input:focus {
+            border-color: #3b82f6 !important;
+            ring: 2px #3b82f6;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div id="auth-loading" class="text-center">
+        <div class="w-10 h-10 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
+        <p class="text-gray-500 text-sm tracking-widest uppercase">Yetki Kontrol Ediliyor...</p>
+    </div>
+
+    <div id="admin-panel" class="hidden w-full max-w-lg glass-card rounded-[2.5rem] p-8 md:p-12">
+        <div class="text-center mb-10">
+            <h1 class="text-3xl font-bold tracking-tighter mb-2">Admin<span class="text-blue-500">Panel</span></h1>
+            <p class="text-gray-400 text-sm">Veritabanına yeni içerik ekleme yetkisi aktif.</p>
+        </div>
+
+        <form id="upload-form" class="space-y-6">
+            <div>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1 mb-2">Deneme / Yayın Adı</label>
+                <input type="text" id="title" required placeholder="Örn: Bilgi Sarmal TYT-1" 
+                    class="w-full p-4 rounded-2xl outline-none transition-all">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1 mb-2">Branş</label>
+                    <input type="text" id="subject" required placeholder="Matematik" 
+                        class="w-full p-4 rounded-2xl outline-none transition-all">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1 mb-2">Sınav Tipi</label>
+                    <select id="type" class="w-full p-4 rounded-2xl outline-none transition-all cursor-pointer">
+                        <option value="Deneme">Deneme</option>
+                        <option value="Tarama">Tarama</option>
+                        <option value="Yazılı">Yazılı</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1 mb-2">Cevap Anahtarı Linki</label>
+                <input type="url" id="answer_url" required placeholder="https://resim-veya-pdf-linki.com" 
+                    class="w-full p-4 rounded-2xl outline-none transition-all text-sm">
+            </div>
+
+            <button type="submit" id="submit-btn" 
+                class="w-full py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl shadow-xl shadow-blue-900/20 transition-all transform active:scale-95">
+                Veritabanına Kaydet
+            </button>
+        </form>
+
+        <div id="status-msg" class="mt-6 text-center text-sm font-medium"></div>
+
+        <div class="mt-8 pt-6 border-t border-white/5 flex justify-between items-center">
+            <button onclick="window.location.href='index.html'" class="text-[10px] text-gray-500 hover:text-white transition uppercase tracking-widest">Siteye Dön</button>
+            <button onclick="signOut()" class="text-[10px] text-red-500/50 hover:text-red-500 transition uppercase tracking-widest font-bold">Çıkış Yap</button>
+        </div>
+    </div>
+
+    <script>
+        // --- KONFİGÜRASYON ---
+        const SUPABASE_URL = 'https://sadxpttfkzqiqlqccyix.supabase.co';
+        const SUPABASE_KEY = 'EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNhZHhwdHRma3pxaXFscWNjeWl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNDE3NTksImV4cCI6MjA5MjYxNzc1OX0.rEKr4zdM_KCIdkdxakEppOiKDUKo2Jknkp_CYbMCPWE';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const ADMIN_EMAIL = "senin-mailin@gmail.com"; // BURAYI KENDİ MAİLİNLE DEĞİŞTİR!
+
+        // --- AUTH KONTROLÜ ---
+        async function checkAdmin() {
+            const { data: { user }, error } = await supabase.auth.getUser();
+
+            if (error || !user) {
+                // Giriş yoksa login'e yolla
+                window.location.href = 'login.html?to=admin.html';
+                return;
+            }
+
+            if (user.email !== ADMIN_EMAIL) {
+                // Giriş var ama admin değilse index'e yolla
+                alert("Yetkisiz Erişim! Sadece yönetici girebilir.");
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Her şey yolundaysa paneli göster
+            document.getElementById('auth-loading').classList.add('hidden');
+            document.getElementById('admin-panel').classList.remove('hidden');
+        }
+
+        // --- VERİ EKLEME ---
+        const form = document.getElementById('upload-form');
+        const statusMsg = document.getElementById('status-msg');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submit-btn');
+            
+            btn.disabled = true;
+            btn.innerText = "Gönderiliyor...";
+            statusMsg.innerText = "";
+
+            const payload = {
+                title: document.getElementById('title').value,
+                subject: document.getElementById('subject').value,
+                type: document.getElementById('type').value,
+                answer_url: document.getElementById('answer_url').value,
+                date: new Date().getFullYear().toString()
+            };
+
+            const { error } = await supabase
+                .from('exams')
+                .insert([payload]);
+
+            if (error) {
+                statusMsg.innerText = "Hata: " + error.message;
+                statusMsg.className = "mt-6 text-center text-sm font-medium text-red-500";
+            } else {
+                statusMsg.innerText = "✓ Başarıyla Veritabanına Eklendi!";
+                statusMsg.className = "mt-6 text-center text-sm font-medium text-green-500";
+                form.reset();
+            }
+
+            btn.disabled = false;
+            btn.innerText = "Veritabanına Kaydet";
+        });
+
+        async function signOut() {
+            await supabase.auth.signOut();
+            window.location.href = 'login.html';
+        }
+
+        // Sayfa açıldığında kontrolü başlat
+        checkAdmin();
+    </script>
+</body>
+</html>
